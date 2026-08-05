@@ -1,0 +1,11 @@
+name: 'Valida package.json'
+description: 'Valida se o package.json contém apenas versões estáveis (sem tags pre-release)'
+inputs:
+  package-json-path:
+    description: 'Caminho para o arquivo package.json'
+    required: false
+    default: 'package.json'
+
+runs:
+  using: 'node18'
+  main: 'validate.js'

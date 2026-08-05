@@ -1,0 +1,33 @@
+name: PR Version Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
+
+jobs:
+  valida-package-json:
+    name: 🔍 Valida package.json
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout do PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      
+      - name: 🔍 Validar package.json
+        uses: ./.github/actions/valida-package.json
+        with:
+          package-json-path: 'package.json'
+      
+      - name: 📊 Resumo da Validação
+        if: always()
+        run: |
+          echo "### 📋 Validação de Versões" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Versões Estáveis | ${{ job.status == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
