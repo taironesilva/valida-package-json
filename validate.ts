@@ -26,8 +26,10 @@ export async function run() {
         const cleanBranchName = branchName.replace("refs/heads/", "");
 
         const strictVersionRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+        const openVersionRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/;
         const dependencyVersionRegex = /^(?:\^|>=)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
         const isClosedVersion = strictVersionRegex.test(version);
+        const isOpenVersion = openVersionRegex.test(version) && !isClosedVersion;
         const isMainOrRelease = cleanBranchName === "main" || cleanBranchName.startsWith("release/");
 
         const depTypes = [
@@ -62,7 +64,7 @@ export async function run() {
         }
 
         const dependencyValidation = invalidDependencies.length === 0;
-        const versionValidation = isMainOrRelease ? isClosedVersion : !isClosedVersion;
+        const versionValidation = isMainOrRelease ? isClosedVersion : isOpenVersion;
         const isValidVersion = versionValidation && dependencyValidation;
 
         if (isValidVersion) {
@@ -70,14 +72,14 @@ export async function run() {
         } else {
             const reasons: string[] = [];
 
-            if (!isClosedVersion) {
-              reasons.push(`Versão principal ${version} está em formato inválido. Esperado: x.y.z.`);
-            }
-
             if (isMainOrRelease && !isClosedVersion) {
               reasons.push(`A branch ${cleanBranchName} exige versão principal em formato x.y.z.`);
-            } else if (!isMainOrRelease && isClosedVersion) {
-              reasons.push(`A branch ${cleanBranchName} exige uma versão principal aberta (sem x.y.z).`);
+            } else if (!isMainOrRelease && !isOpenVersion) {
+              reasons.push(`A branch ${cleanBranchName} exige uma versão principal aberta, como 1.0.6-rc.`);
+            }
+
+            if (!isClosedVersion && !isOpenVersion) {
+              reasons.push(`Versão principal ${version} está em formato inválido.`);
             }
 
             if (invalidDependencies.length > 0) {
@@ -85,7 +87,6 @@ export async function run() {
             }
 
             const failureMessage = `Validação falhou para a branch ${cleanBranchName}.\n${reasons.join('\n')}`;
-            core.error(failureMessage);
             core.setFailed(failureMessage);
         }
 
