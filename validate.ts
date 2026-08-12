@@ -39,8 +39,10 @@ export async function run() {
           { key: 'optionalDependencies', label: 'Dependências Opcionais' }
         ];
 
+        const versionValidation = isMainOrRelease ? isClosedVersion : isOpenVersion;
+
         const foundVersions: Array<{ name: string; value: string; valid: boolean }> = [
-          { name: 'Versão principal', value: version, valid: isClosedVersion }
+          { name: 'Versão principal', value: version, valid: versionValidation }
         ];
 
         const invalidDependencies: string[] = [];
@@ -64,7 +66,6 @@ export async function run() {
         }
 
         const dependencyValidation = invalidDependencies.length === 0;
-        const versionValidation = isMainOrRelease ? isClosedVersion : isOpenVersion;
         const isValidVersion = versionValidation && dependencyValidation;
 
         if (isValidVersion) {
@@ -75,7 +76,7 @@ export async function run() {
             if (isMainOrRelease && !isClosedVersion) {
               reasons.push(`A branch ${cleanBranchName} exige versão principal em formato x.y.z.`);
             } else if (!isMainOrRelease && !isOpenVersion) {
-              reasons.push(`A branch ${cleanBranchName} exige uma versão principal aberta, como 1.0.6-rc.`);
+              reasons.push(`A branch ${cleanBranchName} exige uma versão principal aberta, como x.y.z-rc.`);
             }
 
             if (!isClosedVersion && !isOpenVersion) {
@@ -86,7 +87,7 @@ export async function run() {
               reasons.push(`Dependências inválidas: ${invalidDependencies.join('; ')}`);
             }
 
-            const failureMessage = `Validação falhou para a branch ${cleanBranchName}.\n${reasons.join('\n')}`;
+            const failureMessage = `\u001b[31m✖\u001b[0m Validação falhou!\nHá versões não aceitas no package.json para a branch ${cleanBranchName}.\n${reasons.join('\n')}`;
             core.setFailed(failureMessage);
         }
 
