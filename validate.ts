@@ -84,9 +84,12 @@ export async function run() {
               reasons.push(`Dependências inválidas: ${invalidDependencies.join('; ')}`);
             }
 
-            core.error(`Validação falhou para a branch ${cleanBranchName}.\n${reasons.join('\n')}`);
+            const failureMessage = `Validação falhou para a branch ${cleanBranchName}.\n${reasons.join('\n')}`;
+            core.error(failureMessage);
+            core.setFailed(failureMessage);
         }
 
+        core.info(`Resultado final: isValidVersion=${isValidVersion}, isClosedVersion=${isClosedVersion}`);
         core.setOutput("is-version-valid", isValidVersion);
         core.setOutput("is-version-closed", isClosedVersion);
     } catch (error) {
