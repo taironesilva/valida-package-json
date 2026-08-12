@@ -26,7 +26,7 @@ export async function run() {
         const cleanBranchName = branchName.replace("refs/heads/", "");
 
         const strictVersionRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
-        const dependencyVersionRegex = /^(?:\^)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+        const dependencyVersionRegex = /^(?:\^|>=)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
         const isClosedVersion = strictVersionRegex.test(version);
         const isMainOrRelease = cleanBranchName === "main" || cleanBranchName.startsWith("release/");
 
