@@ -27,7 +27,7 @@ export async function run() {
 
         const strictVersionRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
         const openVersionRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/;
-        const dependencyVersionRegex = /^(?:\^|>=)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+        const dependencyVersionRegex = /^(?:\*|(?:(?:\^|>=)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)))$/;
         const isClosedVersion = strictVersionRegex.test(version);
         const isOpenVersion = openVersionRegex.test(version) && !isClosedVersion;
         const isMainOrRelease = cleanBranchName === "main" || cleanBranchName.startsWith("release/");
