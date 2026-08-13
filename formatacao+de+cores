@@ -1,0 +1,2 @@
+Negrito + verde: \u001b[1;32m teste \u001b[0m 
+Negrito + vermelho: \u001b[1;31m teste \u001b[0m 
