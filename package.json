@@ -8,16 +8,17 @@
     "validate": "npx tsx validate.ts"
   },
   "dependencies": {
-    "@actions/core": "1.10.1-beta",
-    "@actions/github": "v6.0.0",
-    "lodash": "<=4.17.21"
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.0.0",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "tsx": ">=4.23.12",
-    "typescript": "5.6.3"
+    "tsx": "^4.23.12",
+    "typescript": "5.6.3",
+    "@types/node": "^18.0.0"
   },
   "peerDependencies": {
-    "react": "*abc"
+    "react": "*"
   },
   "optionalDependencies": {
     "fsevents": "2.3.3"
