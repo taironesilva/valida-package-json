@@ -47,27 +47,27 @@ fi
 valid_iso_date() {
   local d="$1"
   if [ "$HAVE_GNU_DATE" -eq 1 ]; then
-    date -d "$d" >/dev/null 2>&1
+    LC_ALL=C date -d "$d" >/dev/null 2>&1
   else
-    date -j -f "%Y-%m-%d" "$d" >/dev/null 2>&1
+    LC_ALL=C date -j -f "%Y-%m-%d" "$d" >/dev/null 2>&1
   fi
 }
 
 to_epoch() {
   local d="$1"
   if [ "$HAVE_GNU_DATE" -eq 1 ]; then
-    date -d "$d" +%s
+    LC_ALL=C date -d "$d" +%s
   else
-    date -j -f "%Y-%m-%d" "$d" +%s
+    LC_ALL=C date -j -f "%Y-%m-%d" "$d" +%s
   fi
 }
 
 last_day_of_month() {
   local start="$1"
   if [ "$HAVE_GNU_DATE" -eq 1 ]; then
-    date -d "$start +1 month -1 day" +%Y-%m-%d
+    LC_ALL=C date -d "$start +1 month -1 day" +%Y-%m-%d
   else
-    date -j -f "%Y-%m-%d" "$start" -v+1m -v-1d +%Y-%m-%d
+    LC_ALL=C date -j -f "%Y-%m-%d" "$start" -v+1m -v-1d +%Y-%m-%d
   fi
 }
 
