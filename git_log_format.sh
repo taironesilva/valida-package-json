@@ -84,6 +84,9 @@ last_day_of_month() {
       else
         day=28
       fi
+      ;;
+    *) return 1 ;;
+  esac
   printf "%04d-%02d-%02d" "$year" "$month" "$day"
 }
 
@@ -94,7 +97,7 @@ while true; do
     break
   fi
   echo "Diretório '$repo' não encontrado. Tente novamente."
-done < <(git -C "$repo" log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short)
+done
 
 # escolher período: repetir até opção válida e datas válidas
 while true; do
