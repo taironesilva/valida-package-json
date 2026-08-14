@@ -84,9 +84,6 @@ last_day_of_month() {
       else
         day=28
       fi
-      ;;
-    *) return 1 ;;
-  esac
   printf "%04d-%02d-%02d" "$year" "$month" "$day"
 }
 
@@ -97,7 +94,7 @@ while true; do
     break
   fi
   echo "Diretório '$repo' não encontrado. Tente novamente."
-done
+done < <(git -C "$repo" log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short)
 
 # escolher período: repetir até opção válida e datas válidas
 while true; do
@@ -150,6 +147,10 @@ cd "$repo" || exit 1
 full_repo=$(git rev-parse --show-toplevel)
 repo_name=$(basename "$full_repo")
 
+# inicializar arrays para evitar 'unbound variable' com set -u
+created=()
+modified=()
+
 echo "Executando: git log --since=\"$since\" --until=\"$until\" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short"
 
 # validar que since <= until (usar GNU/BSD date)
@@ -160,7 +161,6 @@ if [ "$since_ts" -gt "$until_ts" ]; then
   exit 1
 fi
 
-git log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short | \
 while IFS= read -r line; do
   if [ "$line" = "---" ]; then
     # cabeçalho do commit
@@ -188,6 +188,15 @@ while IFS= read -r line; do
     modified+=("$repo_name/$file#$short|$msg")
   fi
 done
+
+# diagnóstico: se não houver registros, mostrar parte do git log para investigação (sem arquivo temporário)
+if [ ${#created[@]:-0} -eq 0 ] && [ ${#modified[@]:-0} -eq 0 ]; then
+  echo
+  echo "Nenhum registro A ou M encontrado no período especificado. Exibindo início do git log para diagnóstico:"
+  echo "---"
+  git -C "$repo" log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short | sed -n '1,200p'
+  echo "---"
+fi
 
 # Imprimir seções separadas
 echo
