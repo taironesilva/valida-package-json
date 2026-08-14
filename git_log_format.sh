@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cores ANSI para saída colorida (macOS Terminal / iTerm)
-GREEN=$'\033[0;32m'
-BLUE=$'\033[0;34m'
-RESET=$'\033[0m'
-
 # Script para gerar saída formatada do git log
 # Executar este script a partir do diretório que contém os repositórios
 #
@@ -150,10 +145,6 @@ cd "$repo" || exit 1
 full_repo=$(git rev-parse --show-toplevel)
 repo_name=$(basename "$full_repo")
 
-# inicializar arrays para evitar 'unbound variable' com set -u
-created=()
-modified=()
-
 echo "Executando: git log --since=\"$since\" --until=\"$until\" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short"
 
 # validar que since <= until (usar GNU/BSD date)
@@ -164,6 +155,7 @@ if [ "$since_ts" -gt "$until_ts" ]; then
   exit 1
 fi
 
+git log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short | \
 while IFS= read -r line; do
   if [ "$line" = "---" ]; then
     # cabeçalho do commit
@@ -183,43 +175,16 @@ while IFS= read -r line; do
   file=${line#*$'\t'}
 
   short=${hash:0:10}
-
-  # agrupar por tipo: A -> criação, M -> modificação
-  if [ "$status" = "A" ]; then
-    created+=("$repo_name/$file#$short|$msg")
-  elif [ "$status" = "M" ]; then
-    modified+=("$repo_name/$file#$short|$msg")
+  if [ "$status" = "M" ]; then
+    ver="5.10.6"
+  elif [ "$status" = "A" ]; then
+    ver="5.10.5"
+  else
+    ver="$status"
   fi
+
+  # saída requerida: Nome do repo (basename) + / + nome do arquivo + # + 10 primeiros do hash + ; + versão + | + mensagem do commit
+  printf "%s/%s#%s;%s|%s\n" "$repo_name" "$file" "$short" "$ver" "$msg"
 done
-
-# diagnóstico: se não houver registros, mostrar parte do git log para investigação (sem arquivo temporário)
-if [ ${#created[@]:-0} -eq 0 ] && [ ${#modified[@]:-0} -eq 0 ]; then
-  echo
-  echo "Nenhum registro A ou M encontrado no período especificado. Exibindo início do git log para diagnóstico:"
-  echo "---"
-  git -C "$repo" log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short | sed -n '1,200p'
-  echo "---"
-fi
-
-# Imprimir seções separadas
-echo
-printf "%b\n" "${GREEN}Criação de scripts - 5.10.5:${RESET}"
-if [ ${#created[@]:-0} -eq 0 ]; then
-  echo "(nenhum)"
-else
-  for e in "${created[@]}"; do
-    echo "$e"
-  done
-fi
-
-echo
-printf "%b\n" "${BLUE}Modificação de scripts - 5.10.6:${RESET}"
-if [ ${#modified[@]:-0} -eq 0 ]; then
-  echo "(nenhum)"
-else
-  for e in "${modified[@]}"; do
-    echo "$e"
-  done
-fi
 
 exit 0
