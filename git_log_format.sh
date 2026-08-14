@@ -37,6 +37,40 @@ convert_date_input() {
   return 0
 }
 
+# detectar se temos GNU date (date -d)
+if date --version >/dev/null 2>&1; then
+  HAVE_GNU_DATE=1
+else
+  HAVE_GNU_DATE=0
+fi
+
+valid_iso_date() {
+  local d="$1"
+  if [ "$HAVE_GNU_DATE" -eq 1 ]; then
+    date -d "$d" >/dev/null 2>&1
+  else
+    date -j -f "%Y-%m-%d" "$d" >/dev/null 2>&1
+  fi
+}
+
+to_epoch() {
+  local d="$1"
+  if [ "$HAVE_GNU_DATE" -eq 1 ]; then
+    date -d "$d" +%s
+  else
+    date -j -f "%Y-%m-%d" "$d" +%s
+  fi
+}
+
+last_day_of_month() {
+  local start="$1"
+  if [ "$HAVE_GNU_DATE" -eq 1 ]; then
+    date -d "$start +1 month -1 day" +%Y-%m-%d
+  else
+    date -j -f "%Y-%m-%d" "$start" -v+1m -v-1d +%Y-%m-%d
+  fi
+}
+
 # solicitar nome do repo até o usuário fornecer um diretório válido
 while true; do
   read -r -p "Nome do projeto (diretório do repo): " repo
@@ -56,7 +90,7 @@ while true; do
   if [ "$opt" = "1" ]; then
     # mês atual: desde o dia 1 até o último dia do mês
     since=$(date +%Y-%m-01)
-    until=$(date -d "$since +1 month -1 day" +%Y-%m-%d)
+    until=$(last_day_of_month "$since")
     echo "Usando mês atual: $since .. $until"
     break
   elif [ "$opt" = "2" ]; then
@@ -66,11 +100,11 @@ while true; do
       read -r -p "Data final   (DD/MM/AA): " until_in
       since_conv=$(convert_date_input "$since_in") || { echo "Data inicial inválida — use o formato DD/MM/AA"; continue; }
       until_conv=$(convert_date_input "$until_in") || { echo "Data final inválida — use o formato DD/MM/AA"; continue; }
-      # validate with date
-      if ! date -d "$since_conv" >/dev/null 2>&1; then echo "Data inicial inválida — use o formato DD/MM/AA"; continue; fi
-      if ! date -d "$until_conv" >/dev/null 2>&1; then echo "Data final inválida — use o formato DD/MM/AA"; continue; fi
-      since_ts=$(date -d "$since_conv" +%s) || { echo "Data inicial inválida"; continue; }
-      until_ts=$(date -d "$until_conv" +%s) || { echo "Data final inválida"; continue; }
+      # validate with date (GNU or BSD)
+      if ! valid_iso_date "$since_conv"; then echo "Data inicial inválida — use o formato DD/MM/AA"; continue; fi
+      if ! valid_iso_date "$until_conv"; then echo "Data final inválida — use o formato DD/MM/AA"; continue; fi
+      since_ts=$(to_epoch "$since_conv") || { echo "Data inicial inválida"; continue; }
+      until_ts=$(to_epoch "$until_conv") || { echo "Data final inválida"; continue; }
       if [ "$since_ts" -gt "$until_ts" ]; then
         echo "Período inválido: a data inicial é posterior à data final. Digite novamente as datas."
         continue
@@ -99,9 +133,9 @@ repo_name=$(basename "$full_repo")
 
 echo "Executando: git log --since=\"$since\" --until=\"$until\" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short"
 
-# validar que since <= until
-since_ts=$(date -d "$since" +%s) || { echo "Data inicial inválida" >&2; exit 1; }
-until_ts=$(date -d "$until" +%s) || { echo "Data final inválida" >&2; exit 1; }
+# validar que since <= until (usar GNU/BSD date)
+since_ts=$(to_epoch "$since") || { echo "Data inicial inválida" >&2; exit 1; }
+until_ts=$(to_epoch "$until") || { echo "Data final inválida" >&2; exit 1; }
 if [ "$since_ts" -gt "$until_ts" ]; then
   echo "Período inválido: a data inicial é posterior à data final." >&2
   exit 1
