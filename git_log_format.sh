@@ -184,7 +184,7 @@ while IFS= read -r line; do
   fi
 
   # saída requerida: Nome do repo (basename) + / + nome do arquivo + # + 10 primeiros do hash + ; + versão + | + mensagem do commit
-  printf "%s/%s#%s;%s|%s\n" "$repo_name" "$file" "$short" "$ver" "$msg"
+  printf "%s|%s#%s;%s|%s\n" "$ver" "$repo_name" "$file" "$short" "$msg"
 done
 
 exit 0
