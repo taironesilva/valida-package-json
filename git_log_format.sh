@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Cores ANSI para saída colorida (macOS Terminal / iTerm)
+GREEN=$'\033[0;32m'
+BLUE=$'\033[0;34m'
+RESET=$'\033[0m'
+
 # Script para gerar saída formatada do git log
 # Executar este script a partir do diretório que contém os repositórios
 #
@@ -175,16 +180,34 @@ while IFS= read -r line; do
   file=${line#*$'\t'}
 
   short=${hash:0:10}
-  if [ "$status" = "M" ]; then
-    ver="5.10.6"
-  elif [ "$status" = "A" ]; then
-    ver="5.10.5"
-  else
-    ver="$status"
-  fi
 
-  # saída requerida: Nome do repo (basename) + / + nome do arquivo + # + 10 primeiros do hash + ; + versão + | + mensagem do commit
-  printf "%s/%s#%s;%s|%s\n" "$repo_name" "$file" "$short" "$ver" "$msg"
+  # agrupar por tipo: A -> criação, M -> modificação
+  if [ "$status" = "A" ]; then
+    created+=("$repo_name/$file#$short|$msg")
+  elif [ "$status" = "M" ]; then
+    modified+=("$repo_name/$file#$short|$msg")
+  fi
 done
+
+# Imprimir seções separadas
+echo
+printf "%b\n" "${GREEN}Criação de scripts - 5.10.5:${RESET}"
+if [ ${#created[@]:-0} -eq 0 ]; then
+  echo "(nenhum)"
+else
+  for e in "${created[@]}"; do
+    echo "$e"
+  done
+fi
+
+echo
+printf "%b\n" "${BLUE}Modificação de scripts - 5.10.6:${RESET}"
+if [ ${#modified[@]:-0} -eq 0 ]; then
+  echo "(nenhum)"
+else
+  for e in "${modified[@]}"; do
+    echo "$e"
+  done
+fi
 
 exit 0
