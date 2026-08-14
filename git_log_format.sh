@@ -155,21 +155,17 @@ if [ "$since_ts" -gt "$until_ts" ]; then
   exit 1
 fi
 
-git log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short \
-| awk -v repo="$repo_name" 'BEGIN{FS="\t"}
-    /^---$/ { getline h; split(h,H,"|"); commit=H[1]; msg=H[3]; next }
-    NF>=2 {
-      status=$1; file=$2;
-      short=substr(commit,1,10);
-      if(status=="M") ver="5.10.6";
-      else if(status=="A") ver="5.10.5";
-      else if(status~/^R/) ver="5.10.6";    # R* -> tratar como M
-      else if(status~/^C/) ver="5.10.5";    # C* -> tratar como A
-      else ver=status;
-      print status "\t" repo"/"file "#" short ";" ver "|" msg
-    }' \
-| sort -k1,1 \
-| cut -f2-
+git log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short | \
+while IFS= read -r line; do
+  if [ "$line" = "---" ]; then
+    # cabeçalho do commit
+    IFS= read -r header || break
+    hash=${header%%|*}
+    tmp=${header#*|}
+    date=${tmp%%|*}
+    msg=${tmp#*|}
+    continue
+  fi
 
   # pular linhas vazias
   [ -z "$line" ] && continue
@@ -188,7 +184,7 @@ git log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H
   fi
 
   # saída requerida: Nome do repo (basename) + / + nome do arquivo + # + 10 primeiros do hash + ; + versão + | + mensagem do commit
-  printf "%s|%s#%s;%s|%s\n" "$ver" "$repo_name" "$file" "$short" "$msg"
+  printf "|%s|%s/%s#%s;|%s|\n" "$ver" "$repo_name" "$file" "$short" "$msg"
 done
 
 exit 0
