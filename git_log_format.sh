@@ -37,38 +37,26 @@ convert_date_input() {
   return 0
 }
 
-# detectar se temos GNU date (date -d)
-if date --version >/dev/null 2>&1; then
-  HAVE_GNU_DATE=1
-else
-  HAVE_GNU_DATE=0
+# macOS-only helpers (uses BSD date syntax)
+# verify running on macOS (requires date supporting -j -f -v)
+if ! date -j >/dev/null 2>&1; then
+  echo "Este script exige macOS (BSD date). Execute no macOS ou ajuste o script." >&2
+  exit 1
 fi
 
 valid_iso_date() {
   local d="$1"
-  if [ "$HAVE_GNU_DATE" -eq 1 ]; then
-    LC_ALL=C date -d "$d" >/dev/null 2>&1
-  else
-    LC_ALL=C date -j -f "%Y-%m-%d" "$d" >/dev/null 2>&1
-  fi
+  LC_ALL=C date -j -f "%Y-%m-%d" "$d" >/dev/null 2>&1
 }
 
 to_epoch() {
   local d="$1"
-  if [ "$HAVE_GNU_DATE" -eq 1 ]; then
-    LC_ALL=C date -d "$d" +%s
-  else
-    LC_ALL=C date -j -f "%Y-%m-%d" "$d" +%s
-  fi
+  LC_ALL=C date -j -f "%Y-%m-%d" "$d" +%s
 }
 
 last_day_of_month() {
   local start="$1"
-  if [ "$HAVE_GNU_DATE" -eq 1 ]; then
-    LC_ALL=C date -d "$start +1 month -1 day" +%Y-%m-%d
-  else
-    LC_ALL=C date -j -f "%Y-%m-%d" "$start" -v+1m -v-1d +%Y-%m-%d
-  fi
+  LC_ALL=C date -j -f "%Y-%m-%d" "$start" -v+1m -v-1d +%Y-%m-%d
 }
 
 # solicitar nome do repo até o usuário fornecer um diretório válido
