@@ -145,7 +145,7 @@ cd "$repo" || exit 1
 full_repo=$(git rev-parse --show-toplevel)
 repo_name=$(basename "$full_repo")
 
-echo "Executando: git log --since=\"$since\" --until=\"$until\" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short"
+echo "Executando: git log --since=\"$since\" --until=\"$until\" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short --author="c1350285" --diff-filter=AM"
 
 # validar que since <= until (usar GNU/BSD date)
 since_ts=$(to_epoch "$since") || { echo "Data inicial inválida" >&2; exit 1; }
@@ -155,7 +155,7 @@ if [ "$since_ts" -gt "$until_ts" ]; then
   exit 1
 fi
 
-git log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short | \
+git log --since="$since" --until="$until" --name-status --pretty=format:'---%n%H|%ad|%s' --date=short --author="c1350285" --diff-filter=AM | \
 while IFS= read -r line; do
   if [ "$line" = "---" ]; then
     # cabeçalho do commit
