@@ -46,6 +46,10 @@ fi
 
 valid_iso_date() {
   local d="$1"
+  # quick format check
+  if ! [[ $d =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    return 1
+  fi
   LC_ALL=C date -j -f "%Y-%m-%d" "$d" >/dev/null 2>&1
 }
 
@@ -56,7 +60,29 @@ to_epoch() {
 
 last_day_of_month() {
   local start="$1"
-  LC_ALL=C date -j -f "%Y-%m-%d" "$start" -v+1m -v-1d +%Y-%m-%d
+  # start must be YYYY-MM-DD
+  if ! [[ $start =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
+    return 1
+  fi
+  local year=${BASH_REMATCH[1]}
+  local month=${BASH_REMATCH[2]}
+  # force numeric
+  year=$((10#$year))
+  month=$((10#$month))
+  local day
+  case $month in
+    1|3|5|7|8|10|12) day=31 ;;
+    4|6|9|11) day=30 ;;
+    2)
+      if (( (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) )); then
+        day=29
+      else
+        day=28
+      fi
+      ;;
+    *) return 1 ;;
+  esac
+  printf "%04d-%02d-%02d" "$year" "$month" "$day"
 }
 
 # solicitar nome do repo até o usuário fornecer um diretório válido
